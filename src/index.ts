@@ -112,3 +112,21 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
     // always run the program at the end
     program.run();
 }
+
+export function getConfig(containerEnvConfig: {variables: Variable[]}, configPath = "/app/config/config.json"): Record<string, string> {
+    let config = {} as any;
+    if (fs.existsSync(configPath)) {
+        config = JSON.parse(fs.readFileSync(configPath).toString());
+    } else {
+        fs.writeFileSync(configPath, JSON.stringify({}));
+    }
+    for (const key of Object.keys(containerEnvConfig.variables)) {
+        if (config.key !== process.env[key]) {
+            config[key] = process.env[key];
+        } else {
+            config[key] = containerEnvConfig.variables.find((v) => v.name == key);
+        }
+    }
+    fs.writeFileSync(configPath, JSON.stringify(config));
+    return config;
+}

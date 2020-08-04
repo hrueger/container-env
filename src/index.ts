@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-use-before-define */
 
 import findUp from "find-up";
 import * as fs from "fs";
@@ -23,6 +24,19 @@ export function cli(): void {
         .bin("cenv")
         .version(packageInfo.version)
         .description(packageInfo.description)
+
+        .command("add", "Add variables")
+        .action(async ({ logger, args, options }) => {
+            const configFile = await findUp(CONFIG_FILE_NAME);
+            if (!configFile || !fs.existsSync(configFile)) {
+                logger.error(`No '${CONFIG_FILE_NAME}' file found. Exiting.`);
+                return;
+            }
+            const config = JSON.parse(fs.readFileSync(configFile).toString());
+            config.variables.push(await askForVariables());
+            fs.writeFileSync(CONFIG_FILE_NAME, JSON.stringify(config));
+            logger.info("Done");
+        })
 
         .command("generate", "Generate")
         .argument("<type>", "Can be 'compose' or 'run'")
@@ -78,40 +92,7 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
                 ] as any[],
             });
 
-            const variables = [];
-
-            while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result) {
-                const { type } = (await prompt({
-                    name: "type",
-                    type: "select",
-                    message: "Select the type",
-                    choices: [
-                        {
-                            name: "string",
-                        },
-                        {
-                            name: "number",
-                        },
-                        {
-                            name: "boolean",
-                        },
-                    ],
-                })) as any;
-                const result = await prompt({
-                    type: "form",
-                    name: "variable",
-                    message: "Please provide the following information:",
-                    choices: [
-                        { name: "name", message: "Name", initial: "" },
-                        { name: "description", message: "Description", initial: "" },
-                        { name: "default", message: "Default value", initial: "" },
-                    ] as any[],
-                });
-                (result as any).default = type == "number"
-                    ? parseInt((result as any).default, 10)
-                    : (result as any).default;
-                variables.push((result as any).variable);
-            }
+            const variables = await askForVariables();
             fs.writeFileSync(CONFIG_FILE_NAME, JSON.stringify({
                 container,
                 variables,
@@ -121,6 +102,44 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
 
     // always run the program at the end
     program.run();
+}
+
+async function askForVariables() {
+    const variables = [];
+
+    while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result) {
+        const { type } = (await prompt({
+            name: "type",
+            type: "select",
+            message: "Select the type",
+            choices: [
+                {
+                    name: "string",
+                },
+                {
+                    name: "number",
+                },
+                {
+                    name: "boolean",
+                },
+            ],
+        })) as any;
+        const result = await prompt({
+            type: "form",
+            name: "variable",
+            message: "Please provide the following information:",
+            choices: [
+                { name: "name", message: "Name", initial: "" },
+                { name: "description", message: "Description", initial: "" },
+                { name: "default", message: "Default value", initial: "" },
+            ] as any[],
+        });
+        (result as any).default = type == "number"
+            ? parseInt((result as any).default, 10)
+            : (result as any).default;
+        variables.push((result as any).variable);
+    }
+    return variables;
 }
 
 export function getConfig(containerEnvConfig: {variables: Variable[]}, configPath = "/app/config/config.json"): Record<string, string> {

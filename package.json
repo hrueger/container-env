@@ -1,0 +1,42 @@
+{
+    "name": "container-env",
+    "version": "1.0.0",
+    "description": "An environment variable management tool for Node.js apps running inside containers",
+    "main": "index.js",
+    "dependencies": {
+        "chalk": "^4.1.0",
+        "clear": "^0.1.0",
+        "commander": "^6.0.0",
+        "figlet": "^1.5.0",
+        "path": "^0.12.7"
+    },
+    "devDependencies": {
+        "@types/node": "^14.0.27",
+        "nodemon": "^2.0.4",
+        "ts-node": "^8.10.2",
+        "typescript": "^3.9.7"
+    },
+    "scripts": {
+        "build": "tsc"
+    },
+    "bin": {
+        "container-env": "./bin/cli",
+        "cenv": "./bin/cli"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/hrueger/container-env.git"
+    },
+    "keywords": [
+        "environment",
+        "tool",
+        "docker",
+        "container"
+    ],
+    "author": "Hannes Rüger",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/hrueger/container-env/issues"
+    },
+    "homepage": "https://github.com/hrueger/container-env#readme"
+}

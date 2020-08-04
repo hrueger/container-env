@@ -22,7 +22,8 @@
     },
     "scripts": {
         "build": "tsc",
-        "start": "tsc -w"
+        "start": "tsc -w",
+        "prepare": "npm run build"
     },
     "bin": {
         "container-env": "./bin/cli",

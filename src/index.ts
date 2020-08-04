@@ -5,6 +5,13 @@ import * as fs from "fs";
 import { prompt } from "enquirer";
 import { program } from "@caporal/core";
 
+type Variable = {
+    name: string;
+    description: string;
+    type: "number" | "string" | "boolean";
+    default: string;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageInfo = require("../package.json");
 
@@ -74,7 +81,7 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
             const variables = [];
 
             while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result) {
-                const isNumber = ((await prompt({
+                const { type } = (await prompt({
                     name: "type",
                     type: "select",
                     message: "Select the type",
@@ -85,8 +92,11 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
                         {
                             name: "number",
                         },
+                        {
+                            name: "boolean",
+                        },
                     ],
-                })) as any).type == "number";
+                })) as any;
                 const result = await prompt({
                     type: "form",
                     name: "variable",
@@ -97,7 +107,7 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
                         { name: "default", message: "Default value", initial: "" },
                     ] as any[],
                 });
-                (result as any).default = isNumber
+                (result as any).default = type == "number"
                     ? parseInt((result as any).default, 10)
                     : (result as any).default;
                 variables.push((result as any).variable);

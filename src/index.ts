@@ -13,6 +13,14 @@ type Variable = {
     default: string;
 }
 
+type ContainerEnvConfig = {
+    container: {
+        name: string;
+        scope: string;
+    };
+    variables: Variable[];
+}
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageInfo = require("../package.json");
 
@@ -26,14 +34,14 @@ export function cli(): void {
         .description(packageInfo.description)
 
         .command("add", "Add variables")
-        .action(async ({ logger, args, options }) => {
+        .action(async ({ logger }) => {
             const configFile = await findUp(CONFIG_FILE_NAME);
             if (!configFile || !fs.existsSync(configFile)) {
                 logger.error(`No '${CONFIG_FILE_NAME}' file found. Exiting.`);
                 return;
             }
-            const config = JSON.parse(fs.readFileSync(configFile).toString());
-            config.variables.push(await askForVariables());
+            const config = JSON.parse(fs.readFileSync(configFile).toString()) as ContainerEnvConfig;
+            config.variables.push(...await askForVariables());
             fs.writeFileSync(CONFIG_FILE_NAME, JSON.stringify(config));
             logger.info("Done");
         })
@@ -47,7 +55,7 @@ export function cli(): void {
                 logger.error(`No '${CONFIG_FILE_NAME}' file found. Exiting.`);
                 return;
             }
-            const config = JSON.parse(fs.readFileSync(configFile).toString());
+            const config = JSON.parse(fs.readFileSync(configFile).toString()) as ContainerEnvConfig;
             let isDockerRun;
             if (args.type == "compose") {
                 isDockerRun = false;
@@ -104,8 +112,8 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
     program.run();
 }
 
-async function askForVariables() {
-    const variables = [];
+async function askForVariables(): Promise<Variable[]> {
+    const variables: Variable[] = [];
 
     do {
         const { type } = (await prompt({
@@ -143,7 +151,7 @@ async function askForVariables() {
 }
 
 export function getConfig(containerEnvConfig: {variables: Variable[]}, configPath = "/app/config/config.json"): Record<string, string> {
-    let config = {} as any;
+    let config = {} as Record<string, string>;
     if (fs.existsSync(configPath)) {
         config = JSON.parse(fs.readFileSync(configPath).toString());
     } else {
@@ -151,9 +159,9 @@ export function getConfig(containerEnvConfig: {variables: Variable[]}, configPat
     }
     for (const key of Object.keys(containerEnvConfig.variables)) {
         if (config.key !== process.env[key]) {
-            config[key] = process.env[key];
+            config[key] = process.env[key] || "";
         } else {
-            config[key] = containerEnvConfig.variables.find((v) => v.name == key);
+            config[key] = containerEnvConfig.variables.find((v) => v.name == key)?.default || "";
         }
     }
     fs.writeFileSync(configPath, JSON.stringify(config));

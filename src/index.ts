@@ -107,7 +107,7 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
 async function askForVariables() {
     const variables = [];
 
-    while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result) {
+    do {
         const { type } = (await prompt({
             name: "type",
             type: "select",
@@ -138,7 +138,7 @@ async function askForVariables() {
             ? parseInt((result as any).default, 10)
             : (result as any).default;
         variables.push((result as any).variable);
-    }
+    } while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result);
     return variables;
 }
 

@@ -54,6 +54,54 @@ ${config.variables.map((v: { name: string, default: string }) => `      - ${v.na
             console.log("\n");
             
         })
+    
+        .command("init", "Initialize")
+        .action(async ({ logger, args, options }) => {
+            const { container } = await prompt({
+                type: "form",
+                name: 'container',
+                message: 'Please provide the following information:',
+                choices: [
+                    { name: 'name', message: 'Container name', initial: '' },
+                    { name: 'scope', message: 'Container scope', initial: '' },
+                ] as any[],
+            });
+
+            const variables = [];
+
+            while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result) {
+                const isNumber = ((await prompt({
+                    name: "type",
+                    type: "select",
+                    message: "Select the type",
+                    choices: [
+                        {
+                            name: "string",
+                        },
+                        {
+                            name: "number",
+                        }
+                    ]
+                })) as any).type == "number";
+                const result = await prompt({
+                    type: "form",
+                    name: 'variable',
+                    message: 'Please provide the following information:',
+                    choices: [
+                        { name: 'name', message: 'Name', initial: '' },
+                        { name: 'description', message: 'Description', initial: '' },
+                        { name: 'default', message: 'Default value', initial: '' }
+                    ] as any[],
+                });
+                (result as any).default = isNumber ? parseInt((result as any).default, 10) : (result as any).default; 
+                variables.push((result as any).variable);
+            }
+            fs.writeFileSync(CONFIG_FILE_NAME, JSON.stringify({
+                container,
+                variables
+            }));
+            logger.info("Done");
+        })
 
 
     // always run the program at the end

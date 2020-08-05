@@ -148,6 +148,7 @@ async function askForVariables(): Promise<Variable[]> {
                 ? (result as any).variable.default == "true"
                 : (result as any).variable.default;
         (result as any).variable.name = (result as any).variable.name.toUpperCase().replace(/ /g, "_");
+        (result as any).variable.type = type;
         variables.push((result as any).variable);
     } while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result);
     return variables;

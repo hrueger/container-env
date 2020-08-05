@@ -3,6 +3,7 @@
     "version": "1.0.1",
     "description": "An environment variable management tool for Node.js apps running inside containers",
     "main": "./build/index.js",
+    "types": "./build/index.d.ts",
     "dependencies": {
         "@caporal/core": "^2.0.2",
         "enquirer": "^2.3.6",

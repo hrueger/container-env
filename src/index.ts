@@ -152,19 +152,21 @@ async function askForVariables(): Promise<Variable[]> {
 }
 
 export function getConfig(containerEnvConfig: {variables: Variable[]}, configPath = "/app/config/config.json"): Record<string, string> {
-    let config = {} as Record<string, string>;
+    let effectiveConfig = {} as Record<string, string>;
     if (fs.existsSync(configPath)) {
-        config = JSON.parse(fs.readFileSync(configPath).toString());
+        effectiveConfig = JSON.parse(fs.readFileSync(configPath).toString());
     } else {
         fs.writeFileSync(configPath, JSON.stringify({}));
     }
-    for (const key of Object.keys(containerEnvConfig.variables)) {
-        if (config.key !== process.env[key]) {
-            config[key] = process.env[key] || "";
-        } else {
-            config[key] = containerEnvConfig.variables.find((v) => v.name == key)?.default || "";
+    for (const variable of containerEnvConfig.variables) {
+        if (process.env[variable.name] !== undefined) {
+            if (effectiveConfig[variable.name] !== process.env[variable.name]) {
+                effectiveConfig[variable.name] = process.env[variable.name] || "";
+            }
+        } else if (process.env.NODE_ENV != "development" || effectiveConfig[variable.name] === undefined) {
+            effectiveConfig[variable.name] = variable.default || "";
         }
     }
-    fs.writeFileSync(configPath, JSON.stringify(config));
-    return config;
+    fs.writeFileSync(configPath, JSON.stringify(effectiveConfig));
+    return effectiveConfig;
 }

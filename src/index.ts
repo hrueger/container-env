@@ -142,9 +142,11 @@ async function askForVariables(): Promise<Variable[]> {
                 { name: "default", message: "Default value", initial: "" },
             ] as any[],
         });
-        (result as any).default = type == "number"
-            ? parseInt((result as any).default, 10)
-            : (result as any).default;
+        (result as any).variable.default = type == "number"
+            ? parseInt((result as any).variable.default, 10)
+            : type == "boolean"
+                ? (result as any).variable.default == "true"
+                : (result as any).variable.default;
         (result as any).variable.name = (result as any).variable.name.toUpperCase().replace(/ /g, "_");
         variables.push((result as any).variable);
     } while (((await prompt({ type: "confirm", message: "Do you want to add a variable?", name: "result" })) as any).result);

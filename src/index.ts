@@ -142,11 +142,9 @@ async function askForVariables(): Promise<Variable[]> {
                 { name: "default", message: "Default value", initial: "" },
             ] as any[],
         });
-        (result as any).variable.default = type == "number"
-            ? parseInt((result as any).variable.default, 10)
-            : type == "boolean"
-                ? (result as any).variable.default == "true"
-                : (result as any).variable.default;
+        (result as any).variable.default = convertToCorrectType(
+            type, (result as any).variable.default,
+        );
         (result as any).variable.name = (result as any).variable.name.toUpperCase().replace(/ /g, "_");
         (result as any).variable.type = type;
         variables.push((result as any).variable);
@@ -154,8 +152,8 @@ async function askForVariables(): Promise<Variable[]> {
     return variables;
 }
 
-export function getConfig(containerEnvConfig: {variables: Variable[]}, configPath = "/app/config/config.json"): Record<string, string> {
-    let effectiveConfig = {} as Record<string, string>;
+export function getConfig(containerEnvConfig: {variables: Variable[]}, configPath = "/app/config/config.json"): Record<string, any> {
+    let effectiveConfig = {} as Record<string, any>;
     if (fs.existsSync(configPath)) {
         effectiveConfig = JSON.parse(fs.readFileSync(configPath).toString());
     } else {
@@ -169,7 +167,18 @@ export function getConfig(containerEnvConfig: {variables: Variable[]}, configPat
         } else if (process.env.NODE_ENV != "development" || effectiveConfig[variable.name] === undefined) {
             effectiveConfig[variable.name] = variable.default || "";
         }
+        effectiveConfig[variable.name] = convertToCorrectType(
+            variable.type, effectiveConfig[variable.name],
+        );
     }
     fs.writeFileSync(configPath, JSON.stringify(effectiveConfig));
     return effectiveConfig;
+}
+
+function convertToCorrectType(type: any, value: string): number | boolean | string {
+    return type == "number"
+        ? parseInt(value, 10)
+        : type == "boolean"
+            ? value == "true"
+            : value;
 }
